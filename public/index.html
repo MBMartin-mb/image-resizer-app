@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Image Resizer</title>
+</head>
+<body>
+  <h1>Nahrát obrázek pro úpravu</h1>
+  <input type="file" id="fileInput" />
+  <button onclick="uploadImage()">Nahrát</button>
+
+  <h2>Výstupy</h2>
+  <div id="results"></div>
+
+  <script>
+    async function uploadImage() {
+      const input = document.getElementById('fileInput');
+      if (input.files.length === 0) {
+        alert('Vyber obrázek');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+
+      const response = await fetch('https://image-resizer-backend-954e.onrender.com/process-image', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = `
+        <p><strong>Social Media:</strong><br><img src="${data.social_media}" /></p>
+        <p><strong>Carousel:</strong><br><img src="${data.carousel}" /></p>
+        <p><strong>Banner:</strong><br><img src="${data.banner}" /></p>
+      `;
+    }
+  </script>
+</body>
+</html>
