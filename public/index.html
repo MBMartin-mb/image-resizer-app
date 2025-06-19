@@ -3,13 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <title>Image Resizer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .upload {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .result-block {
+      margin-bottom: 30px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .result-block img {
+      max-width: 100%;
+      height: auto;
+      margin-top: 10px;
+      display: block;
+    }
+    .download-btn {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .download-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <h1>Nahrát obrázek pro úpravu</h1>
-  <input type="file" id="fileInput" />
-  <button onclick="uploadImage()">Nahrát</button>
+  <h1>🖼️ Image Resizer</h1>
 
-  <h2>Výstupy</h2>
+  <div class="upload">
+    <input type="file" id="fileInput" />
+    <button onclick="uploadImage()">📤 Nahrát</button>
+  </div>
+
   <div id="results"></div>
 
   <script>
@@ -30,11 +77,35 @@
 
       const data = await response.json();
       const resultsDiv = document.getElementById('results');
+
       resultsDiv.innerHTML = `
-        <p><strong>Social Media:</strong><br><img src="${data.social_media}" /></p>
-        <p><strong>Carousel:</strong><br><img src="${data.carousel}" /></p>
-        <p><strong>Banner:</strong><br><img src="${data.banner}" /></p>
+        <div class="result-block">
+          <h3>Social Media (1080x1080)</h3>
+          <img src="${data.social_media}" />
+          <button class="download-btn" onclick="downloadImage('${data.social_media}', 'social_media.png')">Stáhnout PNG</button>
+        </div>
+
+        <div class="result-block">
+          <h3>Carousel (1920x1080)</h3>
+          <img src="${data.carousel}" />
+          <button class="download-btn" onclick="downloadImage('${data.carousel}', 'carousel.png')">Stáhnout PNG</button>
+        </div>
+
+        <div class="result-block">
+          <h3>Banner (300x250)</h3>
+          <img src="${data.banner}" />
+          <button class="download-btn" onclick="downloadImage('${data.banner}', 'banner.png')">Stáhnout PNG</button>
+        </div>
       `;
+    }
+
+    function downloadImage(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   </script>
 </body>
