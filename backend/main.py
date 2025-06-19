@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
@@ -7,6 +7,11 @@ import base64
 from io import BytesIO
 from dotenv import load_dotenv
 import os
+import logging
+
+# Nastavení logování
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -56,21 +61,35 @@ def image_to_base64(image):
     _, buffer = cv2.imencode('.png', image)
     return f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
 
+@app.get("/")
+async def read_root():
+    return {"message": "Welcome to Image Resizer Backend. Use /process-image for image processing."}
+
 @app.post("/process-image")
 async def process_image(file: UploadFile = File(...)):
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    try:
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="No file content provided.")
+        
+        nparr = np.frombuffer(contents, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if image is None:
+            raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    formats = [
-        {"width": 1080, "height": 1080, "key": "social_media"},  # 1:1
-        {"width": 1920, "height": 1080, "key": "carousel"},      # 16:9
-        {"width": 300, "height": 250, "key": "banner"},          # Static banner
-    ]
+        formats = [
+            {"width": 1080, "height": 1080, "key": "social_media"},  # 1:1
+            {"width": 1920, "height": 1080, "key": "carousel"},      # 16:9
+            {"width": 300, "height": 250, "key": "banner"},          # Static banner
+        ]
 
-    result = {}
-    for fmt in formats:
-        resized_image = resize_and_crop(image, fmt["width"], fmt["height"], fmt["width"] / fmt["height"])
-        result[fmt["key"]] = image_to_base64(resized_image)
+        result = {}
+        for fmt in formats:
+            resized_image = resize_and_crop(image, fmt["width"], fmt["height"], fmt["width"] / fmt["height"])
+            result[fmt["key"]] = image_to_base64(resized_image)
 
-    return JSONResponse(content=result)
+        logger.info("Image processed successfully.")
+        return JSONResponse(content=result)
+    except Exception as e:
+        logger.error(f"Error processing image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
